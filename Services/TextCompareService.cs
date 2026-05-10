@@ -24,6 +24,8 @@ namespace ClipTrayPro.Services;
 /// </remarks>
 public sealed class TextCompareService : IDisposable
 {
+    private static readonly TimeSpan TempFileCleanupGracePeriod = TimeSpan.FromSeconds(30);
+
     private readonly AppSettings m_settings;
     private readonly List<string> m_history = [];
     private readonly List<TempFile> m_tempFiles = [];
@@ -60,14 +62,19 @@ public sealed class TextCompareService : IDisposable
         var right = CreateTempFile(m_history[1]);
         var arguments = BuildArguments(m_settings.DiffArguments, left.FullName, right.FullName);
 
-        Process.Start(CreateStartInfo(arguments));
+        var process = Process.Start(CreateStartInfo(arguments));
+        _ = DeleteTempFilesWhenSafeAsync(process, left, right);
     }
 
     public void Dispose()
     {
-        foreach (var tempFile in m_tempFiles)
-            tempFile.Dispose();
-        m_tempFiles.Clear();
+        Clear();
+    }
+
+    public void Clear()
+    {
+        m_history.Clear();
+        ClearTempFiles();
     }
 
     private TempFile CreateTempFile(string text)
@@ -75,6 +82,33 @@ public sealed class TextCompareService : IDisposable
         var tempFile = new TempFile(".txt").WriteAllText(text);
         m_tempFiles.Add(tempFile);
         return tempFile;
+    }
+
+    private void ClearTempFiles()
+    {
+        foreach (var tempFile in m_tempFiles)
+            tempFile.Dispose();
+        m_tempFiles.Clear();
+    }
+
+    private async Task DeleteTempFilesWhenSafeAsync(Process process, params TempFile[] tempFiles)
+    {
+        try
+        {
+            if (process != null)
+                await process.WaitForExitAsync();
+            await Task.Delay(TempFileCleanupGracePeriod);
+        }
+        catch
+        {
+            // Best effort cleanup still happens below.
+        }
+
+        foreach (var tempFile in tempFiles)
+        {
+            tempFile.Dispose();
+            m_tempFiles.Remove(tempFile);
+        }
     }
 
     private ProcessStartInfo CreateStartInfo(string arguments)

@@ -246,6 +246,7 @@ public sealed partial class App : Application
             return;
 
         await Clipboard.ClearAsync();
+        m_textCompareService.Clear();
         m_autoClearAt = null;
         m_lastClipboardFingerprint = string.Empty;
         await UpdateMenuAsync();
