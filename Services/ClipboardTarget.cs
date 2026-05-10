@@ -9,6 +9,8 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using DTC.Core.Extensions;
 
 namespace ClipTrayPro.Services;
@@ -27,6 +29,10 @@ public sealed class ClipboardTarget
         Directory,
         WebAddress
     }
+
+    private static readonly Regex BareWebAddressPattern = new(
+        @"^(?:www\.|[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#].*)?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private readonly TargetType m_type;
     private readonly FileInfo m_file;
@@ -85,9 +91,26 @@ public sealed class ClipboardTarget
         if (string.IsNullOrWhiteSpace(path))
             return null;
 
-        path = path.Trim(' ', '\t', '"', '\'');
+        foreach (var candidate in GetPathCandidates(path))
+        {
+            var target = TryCreate(candidate);
+            if (target != null)
+                return target;
+        }
 
-        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        return null;
+    }
+
+    private static ClipboardTarget TryCreate(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
+            path = uri.LocalPath;
+        else if (Uri.TryCreate(path, UriKind.Absolute, out uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            return new ClipboardTarget(uri);
+        else if (BareWebAddressPattern.IsMatch(path) && Uri.TryCreate($"https://{path}", UriKind.Absolute, out uri))
             return new ClipboardTarget(uri);
 
         var file = new FileInfo(path);
@@ -96,6 +119,64 @@ public sealed class ClipboardTarget
 
         var directory = new DirectoryInfo(path);
         return directory.Exists() ? new ClipboardTarget(directory) : null;
+    }
+
+    private static IEnumerable<string> GetPathCandidates(string path)
+    {
+        path = path.Trim();
+        if (string.IsNullOrEmpty(path))
+            yield break;
+
+        yield return path;
+
+        var unquoted = TrimMatchingQuotes(path);
+        if (!string.Equals(unquoted, path, StringComparison.Ordinal))
+            yield return unquoted;
+
+        var jsonUnescaped = TryJsonUnescape(path);
+        if (!string.IsNullOrEmpty(jsonUnescaped))
+            yield return jsonUnescaped;
+
+        jsonUnescaped = TryJsonUnescape(unquoted);
+        if (!string.IsNullOrEmpty(jsonUnescaped))
+            yield return jsonUnescaped;
+
+        var slashUnescaped = unquoted.Replace(@"\\", @"\", StringComparison.Ordinal);
+        if (!string.Equals(slashUnescaped, unquoted, StringComparison.Ordinal))
+            yield return slashUnescaped;
+
+        var quoteUnescaped = slashUnescaped
+            .Replace("\\\"", "\"", StringComparison.Ordinal)
+            .Replace("\\'", "'", StringComparison.Ordinal);
+        if (!string.Equals(quoteUnescaped, slashUnescaped, StringComparison.Ordinal))
+            yield return quoteUnescaped;
+    }
+
+    private static string TrimMatchingQuotes(string value)
+    {
+        value = value.Trim();
+        if (value.Length < 2)
+            return value;
+
+        return (value[0] == '"' && value[^1] == '"') || (value[0] == '\'' && value[^1] == '\'')
+            ? value[1..^1].Trim()
+            : value;
+    }
+
+    private static string TryJsonUnescape(string value)
+    {
+        value = TrimMatchingQuotes(value);
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+
+        try
+        {
+            return JsonConvert.DeserializeObject<string>($"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"");
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     public void Open()
