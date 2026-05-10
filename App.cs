@@ -162,14 +162,12 @@ public sealed partial class App : Application
             }
         };
 
-#if DEBUG
         menu.Add(new NativeMenuItemSeparator());
         menu.Add(new NativeMenuItem("Exit")
         {
             ToolTip = "Exit",
             Command = new RelayCommand(_ => desktop.Shutdown())
         });
-#endif
 
         menu.NeedsUpdate += async (_, _) => await UpdateMenuAsync();
 

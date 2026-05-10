@@ -74,7 +74,7 @@ public partial class SettingsWindow : Window
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
         m_settings.DiffAppPath = OperatingSystem.IsMacOS()
-            ? MacDiffAppBox.SelectedItem as string ?? string.Empty
+            ? (MacDiffAppBox.SelectedItem as MacApplication)?.Path ?? string.Empty
             : DiffAppPathBox.Text?.Trim() ?? string.Empty;
         m_settings.DiffArguments = string.IsNullOrWhiteSpace(DiffArgumentsBox.Text) ? "$1 $2" : DiffArgumentsBox.Text.Trim();
         m_settings.Save();
@@ -91,7 +91,8 @@ public partial class SettingsWindow : Window
         MacDiffAppBox.IsVisible = true;
         MacDiffAppBox.ItemsSource = Directory
             .EnumerateDirectories("/Applications", "*.app", SearchOption.TopDirectoryOnly)
-            .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .Select(o => new MacApplication(o))
+            .OrderBy(o => o.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
@@ -101,9 +102,21 @@ public partial class SettingsWindow : Window
             return;
 
         var match = MacDiffAppBox.Items
-            .OfType<string>()
-            .FirstOrDefault(o => string.Equals(o, path, StringComparison.Ordinal));
+            .OfType<MacApplication>()
+            .FirstOrDefault(o => string.Equals(o.Path, path, StringComparison.Ordinal));
         if (match != null)
             MacDiffAppBox.SelectedItem = match;
+    }
+
+    public sealed class MacApplication
+    {
+        public MacApplication(string path)
+        {
+            Path = path;
+            DisplayName = System.IO.Path.GetFileNameWithoutExtension(path);
+        }
+
+        public string Path { get; }
+        public string DisplayName { get; }
     }
 }
