@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AssemblyName>ClipTrayPro</AssemblyName>
+    <RootNamespace>ClipTrayPro</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.idea\**;artifacts\**;DTC.Core\**;Installer\**</DefaultItemExcludes>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Version>0.1</Version>
+    <Authors>Dean Edis</Authors>
+    <Company>Dean Edis (DeanTheCoder)</Company>
+    <Copyright>Copyright (c) 2026 Dean Edis</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.9">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="DTC.Core\DTC.Core\DTC.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove=".idea\**\*.cs" />
+    <Compile Remove="DTC.Core\**\*.cs" />
+    <Compile Remove="Installer\**\*.cs" />
+    <Compile Remove="artifacts\**\*.cs" />
+  </ItemGroup>
+</Project>

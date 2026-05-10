@@ -1,0 +1,17 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ClipTrayPro"
+             x:Class="ClipTrayPro.App"
+             x:DataType="local:App"
+             Name="ClipTrayPro"
+             RequestedThemeVariant="Dark">
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="About ClipTrayPro" Command="{CompiledBinding AboutCommand}" />
+    </NativeMenu>
+  </NativeMenu.Menu>
+</Application>
