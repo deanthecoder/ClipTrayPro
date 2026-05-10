@@ -49,6 +49,22 @@ public static class ClipboardReader
         return ClipboardTarget.FromPath(firstLine);
     }
 
+    public static async Task<ClipboardImageTarget> GetImageTargetAsync(IClipboard clipboard)
+    {
+        if (clipboard == null)
+            return null;
+
+        try
+        {
+            var bitmap = await clipboard.TryGetBitmapAsync();
+            return bitmap == null ? null : new ClipboardImageTarget(bitmap);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public static async Task<string> GetFingerprintAsync(IClipboard clipboard)
     {
         if (clipboard == null)

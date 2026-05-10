@@ -2,14 +2,16 @@
 
 # ClipTrayPro
 
-ClipTrayPro is a small tray app for Windows and macOS that makes copied paths, links, and text a little easier to work with.
+ClipTrayPro is a small tray app for Windows and macOS that makes copied paths, links, text, and images a little easier to work with.
 
-It sits quietly in the system tray/menu bar. Copy a file path, folder path, or web address, then open the tray menu to act on it.
+It sits quietly in the system tray/menu bar. Copy a file path, folder path, web address, text, or image, then open the tray menu to act on it.
 
 ## Features
 
 - Open copied files, folders, and web addresses.
 - Reveal copied files or folders in Explorer or Finder.
+- Open copied images in the default image viewer.
+- Save copied images as PNG or JPEG.
 - Remove rich-text formatting from copied text.
 - Compare the last two copied text values with your preferred diff tool.
 - Clear the clipboard manually.
@@ -19,7 +21,9 @@ It sits quietly in the system tray/menu bar. Copy a file path, folder path, or w
 
 Copy something useful, then click the ClipTrayPro tray icon.
 
-If the clipboard contains a file, folder, or web address, the first menu item changes to open it directly. The next item reveals its location when that makes sense. Tooltips show the full path plus a little extra detail, such as file size or folder contents.
+If the clipboard contains a file, folder, web address, or image, the first menu item changes to open it directly. The next item reveals a file or folder location when that makes sense. Tooltips show useful details, such as file size, folder contents, or image dimensions.
+
+Image-only actions appear only when an image is on the clipboard. Text-only actions are hidden while working with an image.
 
 The auto-clear option is off by default. When enabled, ClipTrayPro waits one minute after clipboard content changes, then clears it. If the clipboard changes again during that minute, the timer starts over.
 

@@ -15,6 +15,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using ClipTrayPro.Services;
 using ClipTrayPro.Settings;
@@ -45,8 +46,10 @@ public sealed partial class App : Application
     private NativeMenuItem m_autoClearItem;
     private NativeMenuItem m_removeFormattingItem;
     private NativeMenuItem m_compareTextItem;
+    private NativeMenuItem m_saveImageItem;
     private DispatcherTimer m_clipboardTimer;
     private ClipboardTarget m_clipboardTarget;
+    private ClipboardImageTarget m_imageTarget;
     private string m_lastClipboardFingerprint = string.Empty;
     private DateTimeOffset? m_autoClearAt;
 
@@ -81,6 +84,7 @@ public sealed partial class App : Application
                 m_clipboardTimer?.Stop();
                 TrayIcon.SetIcons(this, null);
                 m_trayIcon?.Dispose();
+                m_imageTarget?.Dispose();
                 m_textCompareService.Dispose();
                 m_clipboardHost?.Close();
                 m_settings.Save();
@@ -142,12 +146,18 @@ public sealed partial class App : Application
             Command = new RelayCommand(_ => m_textCompareService.Compare())
         };
 
+        m_saveImageItem = new NativeMenuItem("Save Image...")
+        {
+            Command = new RelayCommand(async _ => await SaveImageAsync())
+        };
+
         var menu = new NativeMenu
         {
             m_openItem,
             m_revealItem,
             m_removeFormattingItem,
             m_compareTextItem,
+            m_saveImageItem,
             new NativeMenuItemSeparator(),
             m_clearItem,
             m_autoClearItem,
@@ -190,27 +200,44 @@ public sealed partial class App : Application
 
     private async Task UpdateMenuAsync()
     {
+        var oldImageTarget = m_imageTarget;
+        m_imageTarget = await ClipboardReader.GetImageTargetAsync(Clipboard);
+        oldImageTarget?.Dispose();
+
         m_clipboardTarget = await ClipboardReader.GetTargetAsync(Clipboard);
 
-        var hasTarget = m_clipboardTarget != null;
-        m_openItem.Header = hasTarget ? $"Open {m_clipboardTarget.DisplayName}" : "Open...";
-        m_openItem.ToolTip = hasTarget ? m_clipboardTarget.ToolTip : null;
+        var hasImage = m_imageTarget != null;
+        var hasTarget = m_clipboardTarget != null || hasImage;
+        m_openItem.Header = hasImage ? $"Open Image" : m_clipboardTarget != null ? $"Open {m_clipboardTarget.DisplayName}" : "Open...";
+        m_openItem.ToolTip = hasImage ? m_imageTarget.ToolTip : m_clipboardTarget?.ToolTip;
+        m_openItem.Command = new RelayCommand(_ =>
+        {
+            if (m_imageTarget != null)
+                m_imageTarget.Open();
+            else
+                m_clipboardTarget?.Open();
+        });
         m_openItem.IsEnabled = hasTarget;
 
-        m_revealItem.Header = hasTarget ? $"Reveal {m_clipboardTarget.DisplayName}" : "Reveal...";
-        m_revealItem.ToolTip = hasTarget ? m_clipboardTarget.ToolTip : null;
-        m_revealItem.IsEnabled = hasTarget && m_clipboardTarget.CanReveal;
+        m_revealItem.Header = m_clipboardTarget != null ? $"Reveal {m_clipboardTarget.DisplayName}" : "Reveal...";
+        m_revealItem.ToolTip = m_clipboardTarget?.ToolTip;
+        m_revealItem.IsVisible = !hasImage;
+        m_revealItem.IsEnabled = m_clipboardTarget?.CanReveal == true;
 
         m_clearItem.IsEnabled = Clipboard != null;
         m_autoClearItem.IsChecked = m_settings.AutoClearClipboard;
         m_autoClearItem.IsEnabled = Clipboard != null;
-        m_removeFormattingItem.IsEnabled = Clipboard != null && !string.IsNullOrEmpty(await Clipboard.TryGetTextAsync());
+        m_removeFormattingItem.IsVisible = !hasImage;
+        m_removeFormattingItem.IsEnabled = !hasImage && Clipboard != null && !string.IsNullOrEmpty(await Clipboard.TryGetTextAsync());
+        m_compareTextItem.IsVisible = !hasImage;
         m_compareTextItem.IsEnabled = m_textCompareService.CanCompare;
         m_compareTextItem.ToolTip = !m_textCompareService.HasDiffApp
             ? "Choose a diff app in Settings first."
             : !m_textCompareService.HasTextPair
             ? "Copy two different text values first."
             : null;
+        m_saveImageItem.IsVisible = hasImage;
+        m_saveImageItem.IsEnabled = hasImage;
     }
 
     private async Task ClearClipboardAsync()
@@ -301,5 +328,39 @@ public sealed partial class App : Application
         };
         window.Saved += async (_, _) => await UpdateMenuAsync();
         window.Show(m_clipboardHost);
+    }
+
+    private async Task SaveImageAsync()
+    {
+        if (m_imageTarget == null)
+            return;
+
+        var file = await m_clipboardHost.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save clipboard image",
+            SuggestedFileName = "clipboard-image.png",
+            DefaultExtension = "png",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("PNG image")
+                {
+                    Patterns = ["*.png"],
+                    AppleUniformTypeIdentifiers = ["public.png"],
+                    MimeTypes = ["image/png"]
+                },
+                new FilePickerFileType("JPEG image")
+                {
+                    Patterns = ["*.jpg", "*.jpeg"],
+                    AppleUniformTypeIdentifiers = ["public.jpeg"],
+                    MimeTypes = ["image/jpeg"]
+                }
+            ],
+            ShowOverwritePrompt = true
+        });
+
+        if (file == null)
+            return;
+
+        await m_imageTarget.SaveAsync(await file.OpenWriteAsync(), file.Name);
     }
 }
