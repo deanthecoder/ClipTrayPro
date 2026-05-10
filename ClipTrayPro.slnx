@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/DTC.Core/">
+    <Project Path="DTC.Core/DTC.Core/DTC.Core.csproj" />
+  </Folder>
+  <Project Path="ClipTrayPro.csproj" />
+</Solution>
