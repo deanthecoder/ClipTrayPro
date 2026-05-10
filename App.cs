@@ -90,7 +90,7 @@ public sealed partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private Window CreateClipboardHost()
+    private static Window CreateClipboardHost()
     {
         var window = new Window
         {
@@ -159,15 +159,14 @@ public sealed partial class App : Application
             new NativeMenuItem("About")
             {
                 Command = new RelayCommand(_ => ShowAboutDialog())
+            },
+            new NativeMenuItemSeparator(),
+            new NativeMenuItem("Exit")
+            {
+                ToolTip = "Exit",
+                Command = new RelayCommand(_ => desktop.Shutdown())
             }
         };
-
-        menu.Add(new NativeMenuItemSeparator());
-        menu.Add(new NativeMenuItem("Exit")
-        {
-            ToolTip = "Exit",
-            Command = new RelayCommand(_ => desktop.Shutdown())
-        });
 
         menu.NeedsUpdate += async (_, _) => await UpdateMenuAsync();
 
@@ -275,7 +274,7 @@ public sealed partial class App : Application
             await ClearClipboardAsync();
     }
 
-    private void ShowAboutDialog()
+    private static void ShowAboutDialog()
     {
         var assembly = Assembly.GetEntryAssembly();
         var dialog = new AboutDialog(new AboutInfo

@@ -42,7 +42,7 @@ public partial class SettingsWindow : Window
         SelectSavedMacApp(settings.DiffAppPath);
     }
 
-    private async void OnBrowseClick(object sender, RoutedEventArgs e)
+    private async void OnBrowseClickAsync(object sender, RoutedEventArgs e)
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {

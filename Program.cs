@@ -33,7 +33,8 @@ internal static class Program
             .UsePlatformDetect()
             .With(new MacOSPlatformOptions
             {
-                DisableDefaultApplicationMenuItems = true
+                DisableDefaultApplicationMenuItems = true,
+                ShowInDock = false
             })
             .LogToTrace();
     }
