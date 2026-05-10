@@ -11,6 +11,7 @@ It sits quietly in the system tray/menu bar. Copy a file path, folder path, or w
 - Open copied files, folders, and web addresses.
 - Reveal copied files or folders in Explorer or Finder.
 - Remove rich-text formatting from copied text.
+- Compare the last two copied text values with your preferred diff tool.
 - Clear the clipboard manually.
 - Optionally clear the clipboard automatically one minute after new content is copied.
 
@@ -21,6 +22,12 @@ Copy something useful, then click the ClipTrayPro tray icon.
 If the clipboard contains a file, folder, or web address, the first menu item changes to open it directly. The next item reveals its location when that makes sense. Tooltips show the full path plus a little extra detail, such as file size or folder contents.
 
 The auto-clear option is off by default. When enabled, ClipTrayPro waits one minute after clipboard content changes, then clears it. If the clipboard changes again during that minute, the timer starts over.
+
+## Comparing Text
+
+Open **Settings** from the tray menu to choose a diff app and command line. Use `$1` and `$2` as placeholders for the two temporary text files.
+
+Once configured, copy two different pieces of text. The **Compare Text** menu item will open them in your chosen diff tool.
 
 ## Platforms
 

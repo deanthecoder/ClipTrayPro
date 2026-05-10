@@ -30,8 +30,22 @@ public sealed class AppSettings : UserSettingsBase
         set => Set(value);
     }
 
+    public string DiffAppPath
+    {
+        get => Get<string>();
+        set => Set(value ?? string.Empty);
+    }
+
+    public string DiffArguments
+    {
+        get => Get<string>();
+        set => Set(value ?? string.Empty);
+    }
+
     protected override void ApplyDefaults()
     {
         AutoClearClipboard = false;
+        DiffAppPath = string.Empty;
+        DiffArguments = "$1 $2";
     }
 }

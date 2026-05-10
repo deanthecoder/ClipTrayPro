@@ -35,6 +35,7 @@ public sealed partial class App : Application
     private static readonly TimeSpan ClipboardPollInterval = TimeSpan.FromSeconds(1);
 
     private readonly AppSettings m_settings = AppSettings.Instance;
+    private readonly TextCompareService m_textCompareService;
     private Window m_clipboardHost;
     private TrayIcons m_trayIcons;
     private TrayIcon m_trayIcon;
@@ -43,6 +44,7 @@ public sealed partial class App : Application
     private NativeMenuItem m_clearItem;
     private NativeMenuItem m_autoClearItem;
     private NativeMenuItem m_removeFormattingItem;
+    private NativeMenuItem m_compareTextItem;
     private DispatcherTimer m_clipboardTimer;
     private ClipboardTarget m_clipboardTarget;
     private string m_lastClipboardFingerprint = string.Empty;
@@ -50,6 +52,7 @@ public sealed partial class App : Application
 
     public App()
     {
+        m_textCompareService = new TextCompareService(m_settings);
         AboutCommand = new RelayCommand(_ => ShowAboutDialog());
         DataContext = this;
     }
@@ -78,6 +81,7 @@ public sealed partial class App : Application
                 m_clipboardTimer?.Stop();
                 TrayIcon.SetIcons(this, null);
                 m_trayIcon?.Dispose();
+                m_textCompareService.Dispose();
                 m_clipboardHost?.Close();
                 m_settings.Save();
             };
@@ -133,15 +137,25 @@ public sealed partial class App : Application
             Command = new RelayCommand(async _ => await RemoveFormattingAsync())
         };
 
+        m_compareTextItem = new NativeMenuItem("Compare Text")
+        {
+            Command = new RelayCommand(_ => m_textCompareService.Compare())
+        };
+
         var menu = new NativeMenu
         {
             m_openItem,
             m_revealItem,
             m_removeFormattingItem,
+            m_compareTextItem,
             new NativeMenuItemSeparator(),
             m_clearItem,
             m_autoClearItem,
             new NativeMenuItemSeparator(),
+            new NativeMenuItem("Settings...")
+            {
+                Command = new RelayCommand(_ => ShowSettingsWindow())
+            },
             new NativeMenuItem("About")
             {
                 Command = new RelayCommand(_ => ShowAboutDialog())
@@ -194,6 +208,12 @@ public sealed partial class App : Application
         m_autoClearItem.IsChecked = m_settings.AutoClearClipboard;
         m_autoClearItem.IsEnabled = Clipboard != null;
         m_removeFormattingItem.IsEnabled = Clipboard != null && !string.IsNullOrEmpty(await Clipboard.TryGetTextAsync());
+        m_compareTextItem.IsEnabled = m_textCompareService.CanCompare;
+        m_compareTextItem.ToolTip = !m_textCompareService.HasDiffApp
+            ? "Choose a diff app in Settings first."
+            : !m_textCompareService.HasTextPair
+            ? "Copy two different text values first."
+            : null;
     }
 
     private async Task ClearClipboardAsync()
@@ -227,6 +247,12 @@ public sealed partial class App : Application
 
     private async Task OnClipboardTimerTick()
     {
+        if (Clipboard != null)
+        {
+            var text = await Clipboard.TryGetTextAsync();
+            m_textCompareService.AddText(text);
+        }
+
         await UpdateMenuAsync();
 
         if (!m_settings.AutoClearClipboard || Clipboard == null)
@@ -267,5 +293,16 @@ public sealed partial class App : Application
             ShowInTaskbar = false
         };
         dialog.Show();
+    }
+
+    private void ShowSettingsWindow()
+    {
+        var window = new SettingsWindow(m_settings)
+        {
+            Icon = IconLoader.LoadWindowIcon(),
+            ShowInTaskbar = false
+        };
+        window.Saved += async (_, _) => await UpdateMenuAsync();
+        window.Show(m_clipboardHost);
     }
 }
