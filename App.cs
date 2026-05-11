@@ -9,6 +9,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -52,6 +53,10 @@ public sealed partial class App : Application
     private ClipboardImageTarget m_imageTarget;
     private string m_lastClipboardFingerprint = string.Empty;
     private DateTimeOffset? m_autoClearAt;
+
+    private const int GWL_EXSTYLE = -20;
+    private const nint WS_EX_APPWINDOW = 0x00040000;
+    private const nint WS_EX_TOOLWINDOW = 0x00000080;
 
     public App()
     {
@@ -110,7 +115,23 @@ public sealed partial class App : Application
             Icon = IconLoader.LoadWindowIcon()
         };
         window.Show();
+        HideFromWindowsAltTab(window);
         return window;
+    }
+
+    private static void HideFromWindowsAltTab(Window window)
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var handle = window.TryGetPlatformHandle();
+        if (handle?.HandleDescriptor != "HWND")
+            return;
+
+        var style = GetWindowLongPtr(handle.Handle, GWL_EXSTYLE);
+        style &= ~WS_EX_APPWINDOW;
+        style |= WS_EX_TOOLWINDOW;
+        SetWindowLongPtr(handle.Handle, GWL_EXSTYLE, style);
     }
 
     private TrayIcon CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
@@ -364,4 +385,10 @@ public sealed partial class App : Application
 
         await m_imageTarget.SaveAsync(await file.OpenWriteAsync(), file.Name);
     }
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern nint GetWindowLongPtr(nint hWnd, int nIndex);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    private static extern nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
 }
