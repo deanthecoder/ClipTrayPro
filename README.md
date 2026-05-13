@@ -8,7 +8,7 @@ It sits quietly in the system tray/menu bar. Copy a file path, folder path, web 
 
 ## Features
 
-- Open copied files, folders, and web addresses.
+- Open copied files, folders, web addresses, and plain text.
 - Reveal copied files or folders in Explorer or Finder.
 - Open copied images in the default image viewer.
 - Save copied images as PNG or JPEG.
@@ -21,7 +21,7 @@ It sits quietly in the system tray/menu bar. Copy a file path, folder path, web 
 
 Copy something useful, then click the ClipTrayPro tray icon.
 
-If the clipboard contains a file, folder, web address, or image, the first menu item changes to open it directly. The next item reveals a file or folder location when that makes sense. Tooltips show useful details, such as file size, folder contents, or image dimensions.
+If the clipboard contains a file, folder, web address, general text, or image, the first menu item changes to open it directly. Plain text opens in the default text viewer. The next item reveals a file or folder location when that makes sense. Tooltips show useful details, such as file size, folder contents, text previews, or image dimensions.
 
 Image-only actions appear only when an image is on the clipboard. Text-only actions are hidden while working with an image.
 

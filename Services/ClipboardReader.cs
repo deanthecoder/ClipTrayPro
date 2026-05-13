@@ -42,11 +42,7 @@ public static class ClipboardReader
         }
 
         var text = await clipboard.TryGetTextAsync();
-        var firstLine = text?
-            .Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Split('\n')
-            .FirstOrDefault();
-        return ClipboardTarget.FromPath(firstLine);
+        return ClipboardTarget.FromText(text);
     }
 
     public static async Task<ClipboardImageTarget> GetImageTargetAsync(IClipboard clipboard)
