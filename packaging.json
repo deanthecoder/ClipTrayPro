@@ -11,7 +11,8 @@
     "IconIco": "Assets/app.ico",
     "GUID": "{3491610B-E583-4F55-A9F5-760173D0A244}",
     "RuntimeIdentifier": "win-x64",
-    "InstallOpenAL": false
+    "InstallOpenAL": false,
+    "ShowRunOnStartupTask": true
   },
   "Mac": {
     "RuntimeIdentifiers": [
