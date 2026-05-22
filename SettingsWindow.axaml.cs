@@ -39,6 +39,7 @@ public partial class SettingsWindow : Window
         m_settings = settings;
         DiffAppPathBox.Text = settings.DiffAppPath;
         DiffArgumentsBox.Text = string.IsNullOrWhiteSpace(settings.DiffArguments) ? "$1 $2" : settings.DiffArguments;
+        AutoClearClipboardBox.IsChecked = settings.AutoClearClipboard;
         SelectSavedMacApp(settings.DiffAppPath);
     }
 
@@ -77,6 +78,7 @@ public partial class SettingsWindow : Window
             ? (MacDiffAppBox.SelectedItem as MacApplication)?.Path ?? string.Empty
             : DiffAppPathBox.Text?.Trim() ?? string.Empty;
         m_settings.DiffArguments = string.IsNullOrWhiteSpace(DiffArgumentsBox.Text) ? "$1 $2" : DiffArgumentsBox.Text.Trim();
+        m_settings.AutoClearClipboard = AutoClearClipboardBox.IsChecked == true;
         m_settings.Save();
         Saved?.Invoke(this, EventArgs.Empty);
         Close();

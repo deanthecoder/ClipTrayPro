@@ -4,9 +4,8 @@
         x:Class="ClipTrayPro.SettingsWindow"
         Title="ClipTrayPro Settings"
         Width="560"
-        Height="330"
         MinWidth="500"
-        MinHeight="300"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         RequestedThemeVariant="Dark">
@@ -18,57 +17,69 @@
     </Style>
   </Window.Styles>
 
-  <Grid RowDefinitions="Auto,*,Auto" Margin="22" RowSpacing="18">
-    <StackPanel Grid.Row="0" Spacing="6">
+  <Grid Margin="22"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+        RowSpacing="12">
+    <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,6">
       <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" />
-      <TextBlock Text="Choose the app ClipTrayPro uses when comparing copied text." Opacity="0.78" />
+      <TextBlock Text="Configure clipboard behavior and text comparison." Opacity="0.78" />
     </StackPanel>
 
-    <StackPanel Grid.Row="1" Spacing="16">
-      <StackPanel>
-        <TextBlock Classes="label" Text="Diff app" />
-        <Grid x:Name="DiffAppPathPanel" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-          <TextBox x:Name="DiffAppPathBox"
-                   Watermark="C:\Program Files\Example\example.exe" />
-          <Button Grid.Column="1"
-                  MinWidth="40"
-                  Click="OnBrowseClickAsync"
-                  ToolTip.Tip="Select app">
-            <PathIcon Width="16"
-                      Height="16"
-                      Data="M3,4 L9,4 L11,6 L21,6 L21,18 L3,18 Z M5,8 L5,16 L19,16 L19,8 Z" />
-          </Button>
-        </Grid>
-        <ComboBox x:Name="MacDiffAppBox"
-                  IsVisible="False"
-                  HorizontalAlignment="Stretch"
-          PlaceholderText="Choose an app from /Applications">
-          <ComboBox.ItemTemplate>
-            <DataTemplate x:DataType="local:SettingsWindow+MacApplication">
-              <TextBlock Text="{Binding DisplayName}" />
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-        <TextBlock x:Name="DiffAppStatusText"
-                   FontSize="12"
-                   Margin="0,6,0,0"
-                   Opacity="0.68" />
-      </StackPanel>
+    <TextBlock Grid.Row="1" Classes="label" Text="Clipboard" />
+    <CheckBox Grid.Row="2"
+              x:Name="AutoClearClipboardBox"
+              Content="Auto-clear clipboard after 1 minute"
+              Margin="0,0,0,8" />
 
-      <StackPanel>
-        <TextBlock Classes="label" Text="Command line" />
-        <TextBox x:Name="DiffArgumentsBox"
-                 Watermark="$1 $2" />
-        <TextBlock Text="Use $1 and $2 where the two temporary text files should appear."
-                   FontSize="12"
-                   Margin="0,6,0,0"
-                   Opacity="0.68" />
-      </StackPanel>
-    </StackPanel>
+    <TextBlock Grid.Row="3" Classes="label" Text="Text comparison" />
 
-    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+    <TextBlock Grid.Row="4" Classes="label" Text="Diff app" />
+    <Grid Grid.Row="5"
+          x:Name="DiffAppPathPanel"
+          ColumnDefinitions="*,Auto"
+          ColumnSpacing="8">
+      <TextBox x:Name="DiffAppPathBox"
+               Watermark="C:\Program Files\Example\example.exe" />
+      <Button Grid.Column="1"
+              MinWidth="40"
+              Click="OnBrowseClickAsync"
+              ToolTip.Tip="Select app">
+        <PathIcon Width="16"
+                  Height="16"
+                  Data="M3,4 L9,4 L11,6 L21,6 L21,18 L3,18 Z M5,8 L5,16 L19,16 L19,8 Z" />
+      </Button>
+    </Grid>
+    <ComboBox Grid.Row="5"
+              x:Name="MacDiffAppBox"
+              IsVisible="False"
+              HorizontalAlignment="Stretch"
+              PlaceholderText="Choose an app from /Applications">
+      <ComboBox.ItemTemplate>
+        <DataTemplate x:DataType="local:SettingsWindow+MacApplication">
+          <TextBlock Text="{Binding DisplayName}" />
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+    <TextBlock Grid.Row="6"
+               x:Name="DiffAppStatusText"
+               FontSize="12"
+               Opacity="0.68" />
+
+    <TextBlock Grid.Row="7" Classes="label" Text="Command line" />
+    <TextBox Grid.Row="8"
+             x:Name="DiffArgumentsBox"
+             Watermark="$1 $2" />
+    <TextBlock Grid.Row="9"
+               Text="Use $1 and $2 where the two temporary text files should appear."
+               FontSize="12"
+               Opacity="0.68" />
+
+    <UniformGrid Grid.Row="10"
+                 Columns="2"
+                 HorizontalAlignment="Right"
+                 Margin="0,8,0,0">
       <Button MinWidth="86" Click="OnCancelClick" Content="Cancel" />
       <Button MinWidth="86" Click="OnSaveClick" Content="Save" />
-    </StackPanel>
+    </UniformGrid>
   </Grid>
 </Window>

@@ -44,7 +44,6 @@ public sealed partial class App : Application
     private NativeMenuItem m_openItem;
     private NativeMenuItem m_revealItem;
     private NativeMenuItem m_clearItem;
-    private NativeMenuItem m_autoClearItem;
     private NativeMenuItem m_removeFormattingItem;
     private NativeMenuItem m_compareTextItem;
     private NativeMenuItem m_saveImageItem;
@@ -151,12 +150,6 @@ public sealed partial class App : Application
             Command = new RelayCommand(async _ => await ClearClipboardAsync())
         };
 
-        m_autoClearItem = new NativeMenuItem("Auto-clear after 1 minute")
-        {
-            ToggleType = NativeMenuItemToggleType.CheckBox,
-            Command = new RelayCommand(_ => SetAutoClear(!m_settings.AutoClearClipboard))
-        };
-
         m_removeFormattingItem = new NativeMenuItem("Remove Formatting")
         {
             Command = new RelayCommand(async _ => await RemoveFormattingAsync())
@@ -181,8 +174,6 @@ public sealed partial class App : Application
             m_saveImageItem,
             new NativeMenuItemSeparator(),
             m_clearItem,
-            m_autoClearItem,
-            new NativeMenuItemSeparator(),
             new NativeMenuItem("Settings...")
             {
                 Command = new RelayCommand(_ => ShowSettingsWindow())
@@ -246,8 +237,6 @@ public sealed partial class App : Application
         m_revealItem.IsEnabled = m_clipboardTarget?.CanReveal == true;
 
         m_clearItem.IsEnabled = Clipboard != null;
-        m_autoClearItem.IsChecked = m_settings.AutoClearClipboard;
-        m_autoClearItem.IsEnabled = Clipboard != null;
         m_removeFormattingItem.IsVisible = !hasImage;
         m_removeFormattingItem.IsEnabled = !hasImage && Clipboard != null && !string.IsNullOrEmpty(await Clipboard.TryGetTextAsync());
         m_compareTextItem.IsVisible = !hasImage;
@@ -271,14 +260,6 @@ public sealed partial class App : Application
         m_autoClearAt = null;
         m_lastClipboardFingerprint = string.Empty;
         await UpdateMenuAsync();
-    }
-
-    private void SetAutoClear(bool value)
-    {
-        m_settings.AutoClearClipboard = value;
-        m_settings.Save();
-        m_autoClearAt = null;
-        m_autoClearItem.IsChecked = value;
     }
 
     private async Task RemoveFormattingAsync()
