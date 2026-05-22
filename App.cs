@@ -35,6 +35,7 @@ public sealed partial class App : Application
 {
     private static readonly TimeSpan AutoClearDelay = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan ClipboardPollInterval = TimeSpan.FromSeconds(1);
+    private const int CLIPBRD_E_CANT_OPEN = unchecked((int)0x800401D0);
 
     private readonly AppSettings m_settings = AppSettings.Instance;
     private readonly TextCompareService m_textCompareService;
@@ -80,7 +81,7 @@ public sealed partial class App : Application
             TrayIcon.SetIcons(this, m_trayIcons);
 
             m_clipboardTimer = new DispatcherTimer { Interval = ClipboardPollInterval };
-            m_clipboardTimer.Tick += async (_, _) => await OnClipboardTimerTick();
+            m_clipboardTimer.Tick += async (_, _) => await OnClipboardTimerTickSafe();
             m_clipboardTimer.Start();
 
             desktop.Exit += (_, _) =>
@@ -302,6 +303,19 @@ public sealed partial class App : Application
 
         if (m_autoClearAt <= DateTimeOffset.UtcNow)
             await ClearClipboardAsync();
+    }
+
+    private async Task OnClipboardTimerTickSafe()
+    {
+        try
+        {
+            await OnClipboardTimerTick();
+        }
+        catch (COMException ex) when (ex.HResult == CLIPBRD_E_CANT_OPEN)
+        {
+            // Another process can briefly hold the Windows clipboard open.
+            // Ignore this poll and try again on the next timer tick.
+        }
     }
 
     private static void ShowAboutDialog()
