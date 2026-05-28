@@ -24,15 +24,17 @@ namespace ClipTrayPro.Services;
 public sealed class ClipboardImageTarget : IDisposable
 {
     private readonly Bitmap m_bitmap;
+    private readonly int m_bitsPerPixel;
     private TempFile m_tempFile;
 
     public ClipboardImageTarget(Bitmap bitmap)
     {
         m_bitmap = bitmap;
+        m_bitsPerPixel = GetBitsPerPixel();
     }
 
     public string ToolTip =>
-        $"{m_bitmap.PixelSize.Width:N0} x {m_bitmap.PixelSize.Height:N0} px{Environment.NewLine}{GetBitsPerPixel()} bpp";
+        $"{m_bitmap.PixelSize.Width:N0} x {m_bitmap.PixelSize.Height:N0} px{Environment.NewLine}{m_bitsPerPixel} bpp";
 
     public void Open()
     {
@@ -72,6 +74,7 @@ public sealed class ClipboardImageTarget : IDisposable
     {
         m_tempFile?.Dispose();
         m_tempFile = null;
+        m_bitmap.Dispose();
     }
 
     private FileInfo GetTempPngFile()

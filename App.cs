@@ -52,7 +52,9 @@ public sealed partial class App : Application
     private ClipboardTarget m_clipboardTarget;
     private ClipboardImageTarget m_imageTarget;
     private string m_lastClipboardFingerprint = string.Empty;
+    private string m_lastMenuFingerprint = string.Empty;
     private DateTimeOffset? m_autoClearAt;
+    private bool m_isClipboardTickRunning;
 
     private const int GWL_EXSTYLE = -20;
     private const nint WS_EX_APPWINDOW = 0x00040000;
@@ -89,7 +91,9 @@ public sealed partial class App : Application
                 m_clipboardTimer?.Stop();
                 TrayIcon.SetIcons(this, null);
                 m_trayIcon?.Dispose();
+                m_clipboardTarget = null;
                 m_imageTarget?.Dispose();
+                m_imageTarget = null;
                 m_textCompareService.Dispose();
                 m_clipboardHost?.Close();
                 m_settings.Save();
@@ -138,7 +142,13 @@ public sealed partial class App : Application
     {
         m_openItem = new NativeMenuItem("Open...")
         {
-            Command = new RelayCommand(_ => m_clipboardTarget?.Open())
+            Command = new RelayCommand(_ =>
+            {
+                if (m_imageTarget != null)
+                    m_imageTarget.Open();
+                else
+                    m_clipboardTarget?.Open();
+            })
         };
 
         m_revealItem = new NativeMenuItem("Reveal...")
@@ -211,25 +221,31 @@ public sealed partial class App : Application
 
     private IClipboard Clipboard => m_clipboardHost?.Clipboard;
 
-    private async Task UpdateMenuAsync()
+    private async Task UpdateMenuAsync(string fingerprint = null)
     {
+        fingerprint ??= await ClipboardReader.GetFingerprintAsync(Clipboard);
+        if (string.Equals(fingerprint, m_lastMenuFingerprint, StringComparison.Ordinal))
+        {
+            await UpdateMenuStateAsync();
+            return;
+        }
+
+        m_lastMenuFingerprint = fingerprint;
+
         var oldImageTarget = m_imageTarget;
         m_imageTarget = await ClipboardReader.GetImageTargetAsync(Clipboard);
         oldImageTarget?.Dispose();
 
         m_clipboardTarget = await ClipboardReader.GetTargetAsync(Clipboard);
+        await UpdateMenuStateAsync();
+    }
 
+    private async Task UpdateMenuStateAsync()
+    {
         var hasImage = m_imageTarget != null;
         var hasTarget = m_clipboardTarget != null || hasImage;
         m_openItem.Header = hasImage ? $"Open Image" : m_clipboardTarget != null ? $"Open {m_clipboardTarget.DisplayName}" : "Open...";
         m_openItem.ToolTip = hasImage ? m_imageTarget.ToolTip : m_clipboardTarget?.ToolTip;
-        m_openItem.Command = new RelayCommand(_ =>
-        {
-            if (m_imageTarget != null)
-                m_imageTarget.Open();
-            else
-                m_clipboardTarget?.Open();
-        });
         m_openItem.IsEnabled = hasTarget;
 
         m_revealItem.Header = m_clipboardTarget != null ? $"Reveal {m_clipboardTarget.DisplayName}" : "Reveal...";
@@ -260,7 +276,7 @@ public sealed partial class App : Application
         m_textCompareService.Clear();
         m_autoClearAt = null;
         m_lastClipboardFingerprint = string.Empty;
-        await UpdateMenuAsync();
+        await UpdateMenuAsync(string.Empty);
     }
 
     private async Task RemoveFormattingAsync()
@@ -275,34 +291,53 @@ public sealed partial class App : Application
 
     private async Task OnClipboardTimerTick()
     {
-        if (Clipboard != null)
-        {
-            var text = await Clipboard.TryGetTextAsync();
-            m_textCompareService.AddText(text);
-        }
-
-        await UpdateMenuAsync();
-
-        if (!m_settings.AutoClearClipboard || Clipboard == null)
+        if (m_isClipboardTickRunning)
             return;
 
-        var fingerprint = await ClipboardReader.GetFingerprintAsync(Clipboard);
-        if (string.IsNullOrEmpty(fingerprint))
+        m_isClipboardTickRunning = true;
+        try
         {
-            m_lastClipboardFingerprint = string.Empty;
-            m_autoClearAt = null;
-            return;
-        }
+            var fingerprint = await ClipboardReader.GetFingerprintAsync(Clipboard);
 
-        if (!string.Equals(fingerprint, m_lastClipboardFingerprint, StringComparison.Ordinal))
+            if (!string.Equals(fingerprint, m_lastMenuFingerprint, StringComparison.Ordinal))
+            {
+                if (Clipboard != null)
+                {
+                    var text = await Clipboard.TryGetTextAsync();
+                    m_textCompareService.AddText(text);
+                }
+
+                await UpdateMenuAsync(fingerprint);
+            }
+            else
+            {
+                await UpdateMenuStateAsync();
+            }
+
+            if (!m_settings.AutoClearClipboard || Clipboard == null)
+                return;
+
+            if (string.IsNullOrEmpty(fingerprint))
+            {
+                m_lastClipboardFingerprint = string.Empty;
+                m_autoClearAt = null;
+                return;
+            }
+
+            if (!string.Equals(fingerprint, m_lastClipboardFingerprint, StringComparison.Ordinal))
+            {
+                m_lastClipboardFingerprint = fingerprint;
+                m_autoClearAt = DateTimeOffset.UtcNow + AutoClearDelay;
+                return;
+            }
+
+            if (m_autoClearAt <= DateTimeOffset.UtcNow)
+                await ClearClipboardAsync();
+        }
+        finally
         {
-            m_lastClipboardFingerprint = fingerprint;
-            m_autoClearAt = DateTimeOffset.UtcNow + AutoClearDelay;
-            return;
+            m_isClipboardTickRunning = false;
         }
-
-        if (m_autoClearAt <= DateTimeOffset.UtcNow)
-            await ClearClipboardAsync();
     }
 
     private async Task OnClipboardTimerTickSafe()
