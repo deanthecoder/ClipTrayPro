@@ -39,6 +39,7 @@ public sealed partial class App : Application
 
     private readonly AppSettings m_settings = AppSettings.Instance;
     private readonly TextCompareService m_textCompareService;
+    private readonly ImageCompareService m_imageCompareService = new();
     private Window m_clipboardHost;
     private TrayIcons m_trayIcons;
     private TrayIcon m_trayIcon;
@@ -47,6 +48,7 @@ public sealed partial class App : Application
     private NativeMenuItem m_clearItem;
     private NativeMenuItem m_removeFormattingItem;
     private NativeMenuItem m_compareTextItem;
+    private NativeMenuItem m_compareImagesItem;
     private NativeMenuItem m_saveImageItem;
     private DispatcherTimer m_clipboardTimer;
     private ClipboardTarget m_clipboardTarget;
@@ -64,10 +66,13 @@ public sealed partial class App : Application
     {
         m_textCompareService = new TextCompareService(m_settings);
         AboutCommand = new RelayCommand(_ => ShowAboutDialog());
+        ExitCommand = new RelayCommand(_ =>
+            (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown());
         DataContext = this;
     }
 
     public ICommand AboutCommand { get; }
+    public ICommand ExitCommand { get; }
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -171,6 +176,11 @@ public sealed partial class App : Application
             Command = new RelayCommand(_ => m_textCompareService.Compare())
         };
 
+        m_compareImagesItem = new NativeMenuItem("Compare Images")
+        {
+            Command = new RelayCommand(_ => ShowImageComparison())
+        };
+
         m_saveImageItem = new NativeMenuItem("Save Image...")
         {
             Command = new RelayCommand(async _ => await SaveImageAsync())
@@ -182,6 +192,7 @@ public sealed partial class App : Application
             m_revealItem,
             m_removeFormattingItem,
             m_compareTextItem,
+            m_compareImagesItem,
             m_saveImageItem,
             new NativeMenuItemSeparator(),
             m_clearItem,
@@ -234,6 +245,7 @@ public sealed partial class App : Application
 
         var oldImageTarget = m_imageTarget;
         m_imageTarget = await ClipboardReader.GetImageTargetAsync(Clipboard);
+        m_imageCompareService.Add(m_imageTarget);
         oldImageTarget?.Dispose();
 
         m_clipboardTarget = await ClipboardReader.GetTargetAsync(Clipboard);
@@ -263,6 +275,11 @@ public sealed partial class App : Application
             : !m_textCompareService.HasTextPair
             ? "Copy two different text values first."
             : null;
+        m_compareImagesItem.IsVisible = hasImage || m_imageCompareService.HasImages;
+        m_compareImagesItem.IsEnabled = m_imageCompareService.CanCompare;
+        m_compareImagesItem.ToolTip = m_imageCompareService.CanCompare
+            ? null
+            : "Copy two different images or image paths first.";
         m_saveImageItem.IsVisible = hasImage;
         m_saveImageItem.IsEnabled = hasImage;
     }
@@ -274,6 +291,7 @@ public sealed partial class App : Application
 
         await Clipboard.ClearAsync();
         m_textCompareService.Clear();
+        m_imageCompareService.Clear();
         m_autoClearAt = null;
         m_lastClipboardFingerprint = string.Empty;
         await UpdateMenuAsync(string.Empty);
@@ -379,6 +397,20 @@ public sealed partial class App : Application
             ShowInTaskbar = false
         };
         window.Saved += async (_, _) => await UpdateMenuAsync();
+        window.Show(m_clipboardHost);
+    }
+
+    private void ShowImageComparison()
+    {
+        var comparison = m_imageCompareService.CreateComparison();
+        if (comparison == null)
+            return;
+
+        var window = new ImageCompareWindow(comparison)
+        {
+            Icon = IconLoader.LoadWindowIcon(),
+            ShowInTaskbar = false
+        };
         window.Show(m_clipboardHost);
     }
 

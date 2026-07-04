@@ -305,6 +305,6 @@ public sealed class ClipboardTarget
             return true;
 
         var extension = Path.GetExtension(TrimMatchingQuotes(text));
-        return extension.Length > 1;
+        return extension is { Length: > 1 };
     }
 }

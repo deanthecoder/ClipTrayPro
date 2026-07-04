@@ -24,12 +24,16 @@ namespace ClipTrayPro.Services;
 public sealed class ClipboardImageTarget : IDisposable
 {
     private readonly Bitmap m_bitmap;
+    private readonly byte[] m_pngData;
     private readonly int m_bitsPerPixel;
     private TempFile m_tempFile;
 
     public ClipboardImageTarget(Bitmap bitmap)
     {
         m_bitmap = bitmap;
+        using var stream = new MemoryStream();
+        m_bitmap.Save(stream);
+        m_pngData = stream.ToArray();
         m_bitsPerPixel = GetBitsPerPixel();
     }
 
@@ -40,6 +44,31 @@ public sealed class ClipboardImageTarget : IDisposable
     {
         var file = GetTempPngFile();
         file.OpenWithDefaultViewer();
+    }
+
+    public ClipboardImageSnapshot CreateSnapshot() => new(m_pngData);
+
+    public static ClipboardImageTarget FromFile(string path)
+    {
+        if (!IsSupportedImagePath(path))
+            return null;
+
+        try
+        {
+            return new ClipboardImageTarget(new Bitmap(path));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public static bool IsSupportedImagePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            return false;
+
+        return Path.GetExtension(path).ToLowerInvariant() is ".png" or ".tif" or ".tiff" or ".jpg" or ".jpeg";
     }
 
     public async Task SaveAsync(Stream stream, string fileName)
@@ -90,9 +119,8 @@ public sealed class ClipboardImageTarget : IDisposable
 
     private int GetBitsPerPixel()
     {
-        using var stream = new MemoryStream();
-        m_bitmap.Save(stream);
-        return Math.Max(1, (int)Math.Round(stream.Length * 8.0 / Math.Max(1, m_bitmap.PixelSize.Width * m_bitmap.PixelSize.Height)));
+        using var bitmap = SKBitmap.Decode(m_pngData);
+        return bitmap?.BytesPerPixel * 8 ?? 0;
     }
 
     private static SKEncodedImageFormat GetImageFormat(string fileName)

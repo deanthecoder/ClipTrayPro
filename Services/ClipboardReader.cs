@@ -9,6 +9,10 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using Avalonia.Input.Platform;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace ClipTrayPro.Services;
 
@@ -50,15 +54,23 @@ public static class ClipboardReader
         if (clipboard == null)
             return null;
 
+        var target = await GetTargetAsync(clipboard);
+        var fileImage = ClipboardImageTarget.FromFile(target?.FullPath);
+        if (fileImage != null)
+            return fileImage;
+
         try
         {
             var bitmap = await clipboard.TryGetBitmapAsync();
-            return bitmap == null ? null : new ClipboardImageTarget(bitmap);
+            if (bitmap != null)
+                return new ClipboardImageTarget(bitmap);
         }
         catch
         {
-            return null;
+            // Fall through to paths exposed as file-drop data or text.
         }
+
+        return null;
     }
 
     public static async Task<string> GetFingerprintAsync(IClipboard clipboard)
@@ -76,13 +88,72 @@ public static class ClipboardReader
                 .OrderBy(o => o, StringComparer.Ordinal)
                 .ToArray() ?? [];
             var text = await clipboard.TryGetTextAsync();
-            if (formats.Length == 0 && filePaths.Length == 0 && string.IsNullOrEmpty(text))
+            var imageHash = await GetImageHashAsync(clipboard);
+            if (formats.Length == 0 && filePaths.Length == 0 && string.IsNullOrEmpty(text) && string.IsNullOrEmpty(imageHash))
                 return string.Empty;
-            return $"{string.Join("|", formats)}:{string.Join("|", filePaths)}:{text}";
+            return $"{string.Join("|", formats)}:{string.Join("|", filePaths)}:{text}:{imageHash}";
         }
         catch
         {
             return string.Empty;
         }
+    }
+
+    private static async Task<string> GetImageHashAsync(IClipboard clipboard)
+    {
+        Bitmap bitmap;
+        try
+        {
+            bitmap = await clipboard.TryGetBitmapAsync();
+        }
+        catch
+        {
+            return string.Empty;
+        }
+
+        if (bitmap == null)
+            return string.Empty;
+
+        using (bitmap)
+        {
+            try
+            {
+                return GetRawPixelHash(bitmap);
+            }
+            catch
+            {
+                try
+                {
+                    using var stream = new MemoryStream();
+                    bitmap.Save(stream);
+                    return Convert.ToHexString(SHA256.HashData(stream.GetBuffer().AsSpan(0, checked((int)stream.Length))));
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            }
+        }
+    }
+
+    private static string GetRawPixelHash(Bitmap bitmap)
+    {
+        using var pixels = new WriteableBitmap(
+            bitmap.PixelSize,
+            bitmap.Dpi,
+            PixelFormat.Bgra8888,
+            AlphaFormat.Unpremul);
+        using var framebuffer = pixels.Lock();
+        bitmap.CopyPixels(framebuffer, AlphaFormat.Unpremul);
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var row = new byte[bitmap.PixelSize.Width * 4];
+        for (var y = 0; y < bitmap.PixelSize.Height; y++)
+        {
+            Marshal.Copy(framebuffer.Address + y * framebuffer.RowBytes, row, 0, row.Length);
+            hash.AppendData(row);
+        }
+
+        return Convert.ToHexString(hash.GetHashAndReset());
     }
 }

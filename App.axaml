@@ -12,6 +12,10 @@
   <NativeMenu.Menu>
     <NativeMenu>
       <NativeMenuItem Header="About ClipTrayPro" Command="{CompiledBinding AboutCommand}" />
+      <NativeMenuItemSeparator />
+      <NativeMenuItem Header="Quit ClipTrayPro"
+                      Command="{CompiledBinding ExitCommand}"
+                      Gesture="Meta+Q" />
     </NativeMenu>
   </NativeMenu.Menu>
 </Application>
