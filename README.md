@@ -27,8 +27,6 @@ If the clipboard contains a file, folder, web address, general text, or image, t
 
 Image-only actions appear only when an image is on the clipboard. Text-only actions are hidden while working with an image.
 
-Copy two different images, image files, or textual PNG/TIFF/JPEG paths to enable **Compare Images**. The comparison window can fade directly between them or pass through a normalized red difference mask when their dimensions match.
-
 The auto-clear option is off by default. When enabled, ClipTrayPro waits one minute after clipboard content changes, then clears it. If the clipboard changes again during that minute, the timer starts over.
 
 ## Comparing Text
@@ -36,6 +34,14 @@ The auto-clear option is off by default. When enabled, ClipTrayPro waits one min
 Open **Settings** from the tray menu to choose a diff app and command line. Use `$1` and `$2` as placeholders for the two temporary text files.
 
 Once configured, copy two different pieces of text. The **Compare Text** menu item will open them in your chosen diff tool.
+
+## Comparing Images
+
+ClipTrayPro remembers the last two different images copied to the clipboard. These can be clipboard bitmaps, copied PNG/TIFF/JPEG files, or text containing a path to one of those image formats.
+
+Once two images are available, choose **Compare Images** from the tray menu. Use the slider to fade between the previous and latest images. With **Difference mask** enabled, the slider passes through a red difference mask at its midpoint: matching pixels are white and larger RGB changes appear more strongly red. The mask is normalized to keep small changes visible.
+
+The comparison footer reports each image's dimensions, colour depth, and unique colour count, together with the number and percentage of changed pixels. If the image dimensions differ, the difference mask is disabled and the slider fades directly between the two images instead.
 
 ## Platforms
 
