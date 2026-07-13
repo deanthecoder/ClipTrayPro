@@ -5,7 +5,7 @@
   "BundleIdentifier": "com.deanthecoder.cliptraypro",
   "Executable": "ClipTrayPro",
   "Project": "ClipTrayPro.csproj",
-  "Version": "0.1",
+  "Version": "1.1",
   "Win": {
     "InnoScript": "Installer/templates/inno.iss",
     "IconIco": "Assets/app.ico",

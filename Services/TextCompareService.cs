@@ -42,6 +42,8 @@ public sealed class TextCompareService : IDisposable
         (File.Exists(m_settings.DiffAppPath) || Directory.Exists(m_settings.DiffAppPath));
 
     public bool HasTextPair => m_history.Count == 2;
+    internal int HistoryCount => m_history.Count;
+    internal long RetainedCharacterCount => m_history.Sum(o => (long)o.Length);
 
     public void AddText(string text)
     {

@@ -18,11 +18,11 @@
   </Window.Styles>
 
   <Grid Margin="22"
-        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+        RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
         RowSpacing="12">
     <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,6">
       <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" />
-      <TextBlock Text="Configure clipboard behavior and text comparison." Opacity="0.78" />
+      <TextBlock Text="Configure clipboard behavior, diagnostics, and text comparison." Opacity="0.78" />
     </StackPanel>
 
     <TextBlock Grid.Row="1" Classes="label" Text="Clipboard" />
@@ -31,10 +31,27 @@
               Content="Auto-clear clipboard after 1 minute"
               Margin="0,0,0,8" />
 
-    <TextBlock Grid.Row="3" Classes="label" Text="Text comparison" />
+    <TextBlock Grid.Row="3" Classes="label" Text="Diagnostics" />
+    <Grid Grid.Row="4" ColumnDefinitions="*,160" ColumnSpacing="12">
+      <StackPanel Spacing="3">
+        <TextBlock Text="Memory report threshold" />
+        <TextBlock Text="Write detailed diagnostics to the app log at this interval."
+                   FontSize="12"
+                   Opacity="0.68" />
+      </StackPanel>
+      <NumericUpDown Grid.Column="1"
+                     x:Name="MemoryReportThresholdBox"
+                     Minimum="128"
+                     Maximum="16384"
+                     Increment="128"
+                     FormatString="0 MB"
+                     HorizontalContentAlignment="Right" />
+    </Grid>
 
-    <TextBlock Grid.Row="4" Classes="label" Text="Diff app" />
-    <Grid Grid.Row="5"
+    <TextBlock Grid.Row="5" Classes="label" Text="Text comparison" />
+
+    <TextBlock Grid.Row="6" Classes="label" Text="Diff app" />
+    <Grid Grid.Row="7"
           x:Name="DiffAppPathPanel"
           ColumnDefinitions="*,Auto"
           ColumnSpacing="8">
@@ -49,7 +66,7 @@
                   Data="M3,4 L9,4 L11,6 L21,6 L21,18 L3,18 Z M5,8 L5,16 L19,16 L19,8 Z" />
       </Button>
     </Grid>
-    <ComboBox Grid.Row="5"
+    <ComboBox Grid.Row="7"
               x:Name="MacDiffAppBox"
               IsVisible="False"
               HorizontalAlignment="Stretch"
@@ -60,21 +77,21 @@
         </DataTemplate>
       </ComboBox.ItemTemplate>
     </ComboBox>
-    <TextBlock Grid.Row="6"
+    <TextBlock Grid.Row="8"
                x:Name="DiffAppStatusText"
                FontSize="12"
                Opacity="0.68" />
 
-    <TextBlock Grid.Row="7" Classes="label" Text="Command line" />
-    <TextBox Grid.Row="8"
+    <TextBlock Grid.Row="9" Classes="label" Text="Command line" />
+    <TextBox Grid.Row="10"
              x:Name="DiffArgumentsBox"
              Watermark="$1 $2" />
-    <TextBlock Grid.Row="9"
+    <TextBlock Grid.Row="11"
                Text="Use $1 and $2 where the two temporary text files should appear."
                FontSize="12"
                Opacity="0.68" />
 
-    <UniformGrid Grid.Row="10"
+    <UniformGrid Grid.Row="12"
                  Columns="2"
                  HorizontalAlignment="Right"
                  Margin="0,8,0,0">

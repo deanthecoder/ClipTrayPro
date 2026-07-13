@@ -100,6 +100,9 @@ public sealed class ClipboardTarget
 
     public bool CanReveal => m_type is TargetType.File or TargetType.Directory;
 
+    internal string Kind => m_type.ToString();
+    internal int RetainedTextLength => m_text?.Length ?? 0;
+
     public static ClipboardTarget FromPath(string path)
     {
         if (string.IsNullOrWhiteSpace(path))

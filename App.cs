@@ -21,6 +21,7 @@ using Avalonia.Threading;
 using ClipTrayPro.Services;
 using ClipTrayPro.Settings;
 using DTC.Core.Commands;
+using DTC.Core.Extensions;
 using DTC.Core.UI;
 
 namespace ClipTrayPro;
@@ -51,6 +52,7 @@ public sealed partial class App : Application
     private NativeMenuItem m_compareImagesItem;
     private NativeMenuItem m_saveImageItem;
     private DispatcherTimer m_clipboardTimer;
+    private MemoryMonitor m_memoryMonitor;
     private ClipboardTarget m_clipboardTarget;
     private ClipboardImageTarget m_imageTarget;
     private string m_lastClipboardFingerprint = string.Empty;
@@ -91,9 +93,13 @@ public sealed partial class App : Application
             m_clipboardTimer.Tick += async (_, _) => await OnClipboardTimerTickSafe();
             m_clipboardTimer.Start();
 
+            m_memoryMonitor = new MemoryMonitor(m_settings.MemoryReportThresholdMb, GetMemoryDetails);
+            m_memoryMonitor.Start();
+
             desktop.Exit += (_, _) =>
             {
                 m_clipboardTimer?.Stop();
+                m_memoryMonitor?.Dispose();
                 TrayIcon.SetIcons(this, null);
                 m_trayIcon?.Dispose();
                 m_clipboardTarget = null;
@@ -396,8 +402,24 @@ public sealed partial class App : Application
             Icon = IconLoader.LoadWindowIcon(),
             ShowInTaskbar = false
         };
-        window.Saved += async (_, _) => await UpdateMenuAsync();
+        window.Saved += async (_, _) =>
+        {
+            m_memoryMonitor.ThresholdMegabytes = m_settings.MemoryReportThresholdMb;
+            await UpdateMenuAsync();
+        };
         window.Show(m_clipboardHost);
+    }
+
+    private string GetMemoryDetails()
+    {
+        var clipboardKind = m_imageTarget != null
+            ? $"Image {m_imageTarget.Width:N0}x{m_imageTarget.Height:N0}, encoded {((long)m_imageTarget.EncodedByteCount).ToSize()}"
+            : m_clipboardTarget?.Kind ?? "Empty";
+        var retainedClipboardText = m_clipboardTarget?.RetainedTextLength ?? 0;
+        return $"clipboard {clipboardKind}; clipboard text {retainedClipboardText:N0} chars; " +
+               $"text history {m_textCompareService.HistoryCount} items/{m_textCompareService.RetainedCharacterCount:N0} chars; " +
+               $"image history {m_imageCompareService.HistoryCount} items/{m_imageCompareService.RetainedByteCount.ToSize()}; " +
+               $"fingerprints {m_lastClipboardFingerprint.Length:N0}/{m_lastMenuFingerprint.Length:N0} chars";
     }
 
     private void ShowImageComparison()

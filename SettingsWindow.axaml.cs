@@ -40,6 +40,7 @@ public partial class SettingsWindow : Window
         DiffAppPathBox.Text = settings.DiffAppPath;
         DiffArgumentsBox.Text = string.IsNullOrWhiteSpace(settings.DiffArguments) ? "$1 $2" : settings.DiffArguments;
         AutoClearClipboardBox.IsChecked = settings.AutoClearClipboard;
+        MemoryReportThresholdBox.Value = settings.MemoryReportThresholdMb;
         SelectSavedMacApp(settings.DiffAppPath);
     }
 
@@ -79,6 +80,7 @@ public partial class SettingsWindow : Window
             : DiffAppPathBox.Text?.Trim() ?? string.Empty;
         m_settings.DiffArguments = string.IsNullOrWhiteSpace(DiffArgumentsBox.Text) ? "$1 $2" : DiffArgumentsBox.Text.Trim();
         m_settings.AutoClearClipboard = AutoClearClipboardBox.IsChecked == true;
+        m_settings.MemoryReportThresholdMb = (int)(MemoryReportThresholdBox.Value ?? 512);
         m_settings.Save();
         Saved?.Invoke(this, EventArgs.Empty);
         Close();

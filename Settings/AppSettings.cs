@@ -42,10 +42,17 @@ public sealed class AppSettings : UserSettingsBase
         set => Set(value ?? string.Empty);
     }
 
+    public int MemoryReportThresholdMb
+    {
+        get => Get<int>();
+        set => Set(value);
+    }
+
     protected override void ApplyDefaults()
     {
         AutoClearClipboard = false;
         DiffAppPath = string.Empty;
         DiffArguments = "$1 $2";
+        MemoryReportThresholdMb = 512;
     }
 }

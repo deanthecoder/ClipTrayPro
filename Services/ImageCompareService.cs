@@ -20,6 +20,8 @@ public sealed class ImageCompareService
     public bool HasImages => m_history.Count > 0;
     public bool CanCompare => m_history.Count == 2;
     public ClipboardImageSnapshot Latest => m_history.LastOrDefault();
+    internal int HistoryCount => m_history.Count;
+    internal long RetainedByteCount => m_history.Sum(o => (long)o.EncodedByteCount);
 
     public void Add(ClipboardImageTarget target)
     {

@@ -29,6 +29,8 @@ Image-only actions appear only when an image is on the clipboard. Text-only acti
 
 The auto-clear option is off by default. When enabled, ClipTrayPro waits one minute after clipboard content changes, then clears it. If the clipboard changes again during that minute, the timer starts over.
 
+ClipTrayPro also monitors its own memory use. By default, it writes a detailed process, managed-heap, garbage-collection, and retained clipboard summary to the app log whenever working-set or private memory crosses another 512 MB boundary. The reporting interval can be changed in Settings. On Windows, the log is stored at `%APPDATA%\ClipTrayPro\log.txt`.
+
 ## Comparing Text
 
 Open **Settings** from the tray menu to choose a diff app and command line. Use `$1` and `$2` as placeholders for the two temporary text files.

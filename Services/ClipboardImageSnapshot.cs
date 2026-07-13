@@ -40,6 +40,8 @@ public sealed class ClipboardImageSnapshot
     public bool IsUniqueColourCountLimited { get; }
     public string ContentHash { get; }
 
+    internal int EncodedByteCount => m_pngData.Length;
+
     public string Description =>
         $"{Width:N0} × {Height:N0} px · RGB 8-bit · " +
         (IsUniqueColourCountLimited ? $">{UniqueColourLimit:N0} colours" : $"{UniqueColourCount:N0} colours");

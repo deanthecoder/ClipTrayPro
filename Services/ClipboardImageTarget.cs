@@ -40,6 +40,10 @@ public sealed class ClipboardImageTarget : IDisposable
     public string ToolTip =>
         $"{m_bitmap.PixelSize.Width:N0} x {m_bitmap.PixelSize.Height:N0} px{Environment.NewLine}{m_bitsPerPixel} bpp";
 
+    internal int Width => m_bitmap.PixelSize.Width;
+    internal int Height => m_bitmap.PixelSize.Height;
+    internal int EncodedByteCount => m_pngData.Length;
+
     public void Open()
     {
         var file = GetTempPngFile();
