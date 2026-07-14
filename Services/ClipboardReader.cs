@@ -33,7 +33,7 @@ public static class ClipboardReader
         {
             var files = await clipboard.TryGetFilesAsync();
             var firstFile = files?.FirstOrDefault();
-            if (firstFile?.Path?.IsFile == true)
+            if (firstFile?.Path.IsFile == true)
             {
                 var target = ClipboardTarget.FromPath(firstFile.Path.LocalPath);
                 if (target != null)
@@ -78,12 +78,15 @@ public static class ClipboardReader
         if (clipboard == null)
             return string.Empty;
 
+        if (OperatingSystem.IsWindows())
+            return $"windows:{GetClipboardSequenceNumber():X8}";
+
         try
         {
             var formats = (await clipboard.GetDataFormatsAsync()).Select(o => o.ToString()).OrderBy(o => o, StringComparer.Ordinal).ToArray();
             var files = await clipboard.TryGetFilesAsync();
             var filePaths = files?
-                .Where(o => o.Path?.IsFile == true)
+                .Where(o => o.Path.IsFile)
                 .Select(o => o.Path.LocalPath)
                 .OrderBy(o => o, StringComparer.Ordinal)
                 .ToArray() ?? [];
@@ -156,4 +159,7 @@ public static class ClipboardReader
 
         return Convert.ToHexString(hash.GetHashAndReset());
     }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetClipboardSequenceNumber();
 }

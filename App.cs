@@ -300,7 +300,7 @@ public sealed partial class App : Application
         m_imageCompareService.Clear();
         m_autoClearAt = null;
         m_lastClipboardFingerprint = string.Empty;
-        await UpdateMenuAsync(string.Empty);
+        await UpdateMenuAsync();
     }
 
     private async Task RemoveFormattingAsync()
@@ -332,10 +332,6 @@ public sealed partial class App : Application
                 }
 
                 await UpdateMenuAsync(fingerprint);
-            }
-            else
-            {
-                await UpdateMenuStateAsync();
             }
 
             if (!m_settings.AutoClearClipboard || Clipboard == null)
