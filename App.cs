@@ -243,11 +243,21 @@ public sealed partial class App : Application
         fingerprint ??= await ClipboardReader.GetFingerprintAsync(Clipboard);
         if (string.Equals(fingerprint, m_lastMenuFingerprint, StringComparison.Ordinal))
         {
+            // Do not let one transient clipboard-read failure make an image invisible until its next copy.
+            // Opening the tray menu is a natural point to retry an image which could not be read previously.
+            if (m_imageTarget == null)
+            {
+                var imageTarget = await ClipboardReader.GetImageTargetAsync(Clipboard);
+                if (imageTarget != null)
+                {
+                    m_imageTarget = imageTarget;
+                    m_imageCompareService.Add(imageTarget);
+                }
+            }
+
             await UpdateMenuStateAsync();
             return;
         }
-
-        m_lastMenuFingerprint = fingerprint;
 
         var oldImageTarget = m_imageTarget;
         m_imageTarget = await ClipboardReader.GetImageTargetAsync(Clipboard);
@@ -255,6 +265,9 @@ public sealed partial class App : Application
         oldImageTarget?.Dispose();
 
         m_clipboardTarget = await ClipboardReader.GetTargetAsync(Clipboard);
+        // Only cache this sequence number after all clipboard reads have completed. Otherwise a short-lived lock
+        // can permanently leave the menu showing the state from before the copy.
+        m_lastMenuFingerprint = fingerprint;
         await UpdateMenuStateAsync();
     }
 
